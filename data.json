@@ -1,0 +1,240 @@
+[
+  {
+    "date": "2026-04-17",
+    "activities": [
+      "Sitting"
+    ],
+    "durations": {
+      "Sitting": "8"
+    },
+    "exercises": [],
+    "discomfort": 5,
+    "trend": "same",
+    "notes": "",
+    "sleepScore": "",
+    "hrv": "",
+    "restingHR": "",
+    "calories": "",
+    "id": 1776622985508
+  },
+  {
+    "date": "2026-04-18",
+    "activities": [
+      "Walking"
+    ],
+    "durations": {
+      "Walking": "30"
+    },
+    "exercises": [],
+    "discomfort": 5,
+    "trend": "better",
+    "notes": "",
+    "sleepScore": "",
+    "hrv": "",
+    "restingHR": "",
+    "calories": "",
+    "id": 1776622658342
+  },
+  {
+    "date": "2026-04-19",
+    "activities": [
+      "Walking"
+    ],
+    "durations": {
+      "Walking": "30"
+    },
+    "exercises": [],
+    "discomfort": 5,
+    "trend": "same",
+    "notes": "",
+    "sleepScore": "54",
+    "hrv": "32",
+    "restingHR": "52",
+    "calories": "2200",
+    "id": 1776622954725
+  },
+  {
+    "date": "2026-04-20",
+    "activities": [
+      "Regular Bike",
+      "Strength"
+    ],
+    "durations": {
+      "Regular Bike": "40"
+    },
+    "exercises": [
+      {
+        "name": "pushups",
+        "sets": [
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          }
+        ]
+      },
+      {
+        "name": "shoulders",
+        "sets": [
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          }
+        ]
+      },
+      {
+        "name": "chinups",
+        "sets": [
+          {
+            "reps": "3"
+          },
+          {
+            "reps": "4"
+          },
+          {
+            "reps": "3"
+          }
+        ]
+      }
+    ],
+    "discomfort": 5,
+    "trend": "worse",
+    "notes": "",
+    "sleepScore": "96",
+    "hrv": "50",
+    "restingHR": "46",
+    "calories": "2200",
+    "id": 1776714607206
+  },
+  {
+    "date": "2026-04-21",
+    "activities": [
+      "E-Bike",
+      "Mobility"
+    ],
+    "durations": {
+      "E-Bike": "30",
+      "Mobility": "15"
+    },
+    "exercises": [],
+    "discomfort": 5,
+    "trend": "same",
+    "notes": "",
+    "sleepScore": "81",
+    "hrv": "49",
+    "restingHR": "45",
+    "calories": "2100",
+    "id": 1776803115944
+  },
+  {
+    "date": "2026-04-22",
+    "activities": [
+      "Regular Bike",
+      "Strength"
+    ],
+    "durations": {
+      "Regular Bike": "40"
+    },
+    "exercises": [
+      {
+        "name": "pushups",
+        "sets": [
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "10"
+          }
+        ]
+      },
+      {
+        "name": "squats",
+        "sets": [
+          {
+            "reps": "20"
+          },
+          {
+            "reps": "20"
+          },
+          {
+            "reps": "20"
+          },
+          {
+            "reps": "10"
+          }
+        ]
+      },
+      {
+        "name": "shoulders",
+        "sets": [
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          },
+          {
+            "reps": "15"
+          }
+        ]
+      },
+      {
+        "name": "chinups",
+        "sets": [
+          {
+            "reps": "3"
+          },
+          {
+            "reps": "4"
+          },
+          {
+            "reps": "4"
+          },
+          {
+            "reps": "3"
+          }
+        ]
+      },
+      {
+        "name": "curls",
+        "sets": [
+          {
+            "reps": "12"
+          },
+          {
+            "reps": "12"
+          },
+          {
+            "reps": "12"
+          },
+          {
+            "reps": "10"
+          }
+        ]
+      }
+    ],
+    "discomfort": 4,
+    "trend": "better",
+    "notes": "",
+    "sleepScore": "89",
+    "hrv": "48",
+    "restingHR": "47",
+    "calories": "2500",
+    "id": 1776888774793
+  }
+]
