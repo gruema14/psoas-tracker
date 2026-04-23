@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Psoas">
+<meta name="theme-color" content="#0f1117">
+<title>Psoas Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #0d0f18;
+  --border: #2a2d3a; --text: #e8e8e0; --text2: #888; --text3: #555; --text4: #3a3d4a;
+  --blue: #3b82f6; --blue-dim: #1e3a5f; --blue-light: #93c5fd;
+  --green: #4ade80; --yellow: #facc15; --orange: #fb923c; --red: #f87171;
+  --nav-h: 64px;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+body { max-width: 480px; margin: 0 auto; padding-bottom: calc(var(--nav-h) + 16px); }
+input, textarea, button, select { font-family: inherit; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
+
+/* Layout */
+#app { min-height: 100vh; }
+.view { display: none; padding: 0 16px 8px; }
+.view.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
+.card-inner { background: var(--surface2); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.label { font-size: 11px; letter-spacing: 1.5px; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; display: block; }
+
+/* Buttons */
+.pill { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.pill.on { background: var(--blue-dim); border-color: var(--blue); color: var(--blue-light); }
+.btn-primary { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:active { opacity: 0.85; }
+.btn-primary:disabled { background: var(--blue-dim); color: #4a6fa5; cursor: not-allowed; }
+.btn-ghost { background: none; border: 1.5px solid var(--border); border-radius: 10px; color: var(--text2); padding: 7px 14px; font-size: 13px; cursor: pointer; }
+.btn-icon { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 2px 6px; line-height: 1; }
+.btn-icon:hover { color: var(--red); }
+.btn-edit { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--text3); padding: 2px 6px; }
+.btn-edit:hover { color: var(--blue-light); }
+
+/* Inputs */
+.inp { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); padding: 10px 14px; font-size: 14px; transition: border-color 0.15s; }
+.inp:focus { outline: none; border-color: var(--blue); }
+.inp-sm { width: 64px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); padding: 5px 8px; font-size: 13px; text-align: center; }
+.inp-sm:focus { outline: none; border-color: var(--blue); }
+textarea.inp { resize: none; line-height: 1.5; }
+
+/* Slider */
+.slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+
+/* Trend buttons */
+.trend-row { display: flex; gap: 6px; }
+.trend-btn { flex: 1; padding: 9px 2px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; font-size: 10px; line-height: 1.3; text-align: center; font-family: inherit; transition: all 0.15s; }
+
+/* Chart */
+.bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+.bar-fill { height: 100%; border-radius: 3px; }
+
+/* Tiles grid */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.tile { background: var(--surface); border-radius: 16px; padding: 16px; text-align: center; }
+.tile-val { font-size: 28px; font-weight: 600; color: var(--blue); font-family: 'DM Mono', monospace; }
+.tile-lbl { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.tile-sub { font-size: 10px; color: var(--text3); }
+
+/* Nav */
+#nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #0d0f18; border-top: 1px solid var(--border); display: flex; height: var(--nav-h); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+.nav-btn { flex: 1; background: none; border: none; color: var(--text3); font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; transition: color 0.15s; }
+.nav-btn.active { color: var(--blue); }
+.nav-btn svg { opacity: 0.6; }
+.nav-btn.active svg { opacity: 1; }
+
+/* Header */
+#hdr { padding: 28px 16px 8px; display: flex; align-items: center; justify-content: space-between; }
+.sync-btn { padding: 7px 12px; border-radius: 10px; background: var(--surface); border: 1.5px solid var(--border); color: var(--text3); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.sync-btn.syncing { border-color: var(--blue); color: var(--blue); }
+.sync-btn.ok { border-color: #34d399; color: #34d399; }
+.sync-btn.err { border-color: var(--red); color: var(--red); }
+
+/* Toast */
+#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #0d2010; border: 1px solid #34d399; color: #34d399; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: transform 0.3s; z-index: 200; white-space: nowrap; pointer-events: none; }
+#toast.err { background: #200d0d; border-color: var(--red); color: var(--red); }
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-bg.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
+.modal-bg.open .modal { transform: translateY(0); }
+.modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+
+/* Misc */
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-icon { font-size: 40px; margin-bottom: 14px; }
+.mono { font-family: 'DM Mono', monospace; }
+.pill-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; display: inline-block; }
+.hint { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Header -->
+<div id="hdr">
+  <div>
+    <div style="font-size:11px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:3px">Recovery Tracker</div>
+    <div style="font-size:22px;font-weight:600">Psoas Rehab</div>
+  </div>
+  <button class="sync-btn" id="sync-btn" onclick="syncNow()">
+    <span id="sync-icon">&#9729;</span>
+    <span id="sync-label">Sync</span>
+  </button>
+</div>
+
+<!-- Views -->
+<div id="view-log" class="view active"></div>
+<div id="view-dashboard" class="view"></div>
+<div id="view-history" class="view"></div>
+
+<!-- Bottom nav -->
+<div id="nav">
+  <button class="nav-btn active" id="nb-log" onclick="switchView('log',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Log
+  </button>
+  <button class="nav-btn" id="nb-dashboard" onclick="switchView('dashboard',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Charts
+  </button>
+  <button class="nav-btn" id="nb-history" onclick="switchView('history',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    History
+  </button>
+  <button class="nav-btn" id="nb-settings" onclick="switchView('settings',this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</div>
+
+<!-- Settings view (added to DOM manually) -->
+<div id="view-settings" class="view"></div>
+
+</div>
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const ACTIVITIES = ['Regular Bike','E-Bike','Running','Walking','Strength','Sitting','Mobility','Rest','Other'];
+const NEEDS_EX = ['Strength'];
+const TRENDS = [
+  {val:'much_worse', label:'Much worse', color:'#f87171'},
+  {val:'worse',      label:'Worse',      color:'#fb923c'},
+  {val:'same',       label:'Same',       color:'#facc15'},
+  {val:'better',     label:'Better',     color:'#a3e635'},
+  {val:'much_better',label:'Much better',color:'#4ade80'},
+];
+
+let entries = [];
+let form = emptyForm();
+let editingId = null;
+let cfg = { token: '', repo: '', branch: 'main', path: 'data.json' };
+
+// ============================================================
+// HELPERS
+// ============================================================
+function emptyForm() {
+  return { date: toDay(), activities: [], durations: {}, exercises: [],
+           discomfort: 0, trend: null, notes: '',
+           sleepScore: '', hrv: '', restingHR: '', calories: '' };
+}
+function toDay() { return new Date().toISOString().slice(0,10); }
+function fmtDate(s) { return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+function disColor(v) {
+  if (v===0) return '#4ade80'; if (v<=3) return '#a3e635';
+  if (v<=5) return '#facc15'; if (v<=7) return '#fb923c'; return '#f87171';
+}
+function disLabel(v) {
+  if (v===0) return 'None'; if (v<=2) return 'Barely noticeable';
+  if (v<=4) return 'Mild'; if (v<=6) return 'Moderate';
+  if (v<=8) return 'Significant'; return 'Severe';
+}
+
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
+function lsSave() {
+  try { localStorage.setItem('psoasEntries', JSON.stringify(entries)); } catch(e) {}
+  try { localStorage.setItem('psoasCfg', JSON.stringify(cfg)); } catch(e) {}
+}
+function lsLoad() {
+  try { const e = localStorage.getItem('psoasEntries'); if (e) entries = JSON.parse(e); } catch(e) {}
+  try { const c = localStorage.getItem('psoasCfg'); if (c) cfg = {...cfg, ...JSON.parse(c)}; } catch(e) {}
+}
+
+// ============================================================
+// GITHUB SYNC
+// ============================================================
+let ghSha = null; // sha of current data.json on GitHub
+
+async function ghFetch(method, body) {
+  if (!cfg.token || !cfg.repo) return null;
+  const url = `https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}`;
+  const headers = { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json' };
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) { const t = await r.text(); throw new Error(`GitHub ${r.status}: ${t}`); }
+  return r.json();
+}
+
+async function ghPull() {
+  setSyncState('syncing', 'Syncing...');
+  try {
+    const data = await ghFetch('GET');
+    ghSha = data.sha;
+    const decoded = JSON.parse(atob(data.content.replace(/\n/g,'')));
+    entries = decoded;
+    lsSave();
+    setSyncState('ok', 'Synced');
+    toast('Data loaded from GitHub');
+    return true;
+  } catch(e) {
+    if (e.message.includes('404')) {
+      // File doesn't exist yet, that's fine
+      ghSha = null;
+      setSyncState('ok', 'Ready');
+      return true;
+    }
+    setSyncState('err', 'Sync failed');
+    toast('GitHub error: ' + e.message, true);
+    return false;
+  }
+}
+
+async function ghPush() {
+  if (!cfg.token || !cfg.repo) return;
+  setSyncState('syncing', 'Saving...');
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(entries, null, 2))));
+    const body = { message: 'Update tracker data', content, branch: cfg.branch };
+    if (ghSha) body.sha = ghSha;
+    const res = await ghFetch('PUT', body);
+    ghSha = res.content.sha;
+    setSyncState('ok', 'Saved');
+    toast('Saved to GitHub');
+  } catch(e) {
+    setSyncState('err', 'Save failed');
+    toast('Save failed: ' + e.message, true);
+  }
+}
+
+async function syncNow() {
+  if (!cfg.token || !cfg.repo) {
+    openSettings();
+    toast('Set up GitHub first', true);
+    return;
+  }
+  await ghPull();
+  renderAll();
+}
+
+function setSyncState(state, label) {
+  const btn = document.getElementById('sync-btn');
+  const icon = document.getElementById('sync-icon');
+  const lbl = document.getElementById('sync-label');
+  btn.className = 'sync-btn ' + state;
+  lbl.textContent = label;
+  icon.innerHTML = state === 'syncing' ? '<span class="spin">&#8635;</span>' :
+                   state === 'ok'      ? '&#10003;' :
+                   state === 'err'     ? '&#9888;' : '&#9729;';
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function toast(msg, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = (isErr ? 'err ' : '') + 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = isErr ? 'err' : '', 2500);
+}
+
+// ============================================================
+// VIEW SWITCHING
+// ============================================================
+const VIEWS = ['log','dashboard','history','settings'];
+function switchView(name, btn) {
+  VIEWS.forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('active', v===name);
+    document.getElementById('nb-'+v)?.classList.toggle('active', v===name);
+  });
+  if (name==='dashboard') renderDashboard();
+  if (name==='history')   renderHistory();
+  if (name==='settings')  renderSettings();
+  window.scrollTo(0,0);
+}
+function openSettings() { switchView('settings', document.getElementById('nb-settings')); }
+
+// ============================================================
+// LOG VIEW
+// ============================================================
+function renderLog() {
+  const el = document.getElementById('view-log');
+  el.innerHTML = '';
+
+  // Date
+  el.appendChild(card(`
+    <span class="label">Date</span>
+    <input type="date" class="inp" id="inp-date" value="${form.date}">
+  `));
+  document.getElementById('inp-date').onchange = e => form.date = e.target.value;
+
+  // Activities
+  const actBtns = ACTIVITIES.map(a =>
+    `<button class="pill${form.activities.includes(a)?' on':''}" onclick="toggleAct('${a}',this)">${a}</button>`
+  ).join('');
+  const nonEx = form.activities.filter(a => !NEEDS_EX.includes(a));
+  const durRows = nonEx.length ? `
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
+      <span class="label">Duration (min)</span>
+      ${nonEx.map(a => `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;color:var(--blue-light)">${a}</span>
+          <input type="number" class="inp-sm" min="0" placeholder="--"
+            value="${form.durations[a]||''}" onchange="form.durations['${a}']=this.value">
+        </div>`).join('')}
+    </div>` : '';
+  el.appendChild(card(`
+    <span class="label">Activities</span>
+    <div class="row" style="margin-bottom:4px">${actBtns}</div>
+    ${durRows}
+  `));
+
+  // Exercises
+  if (form.activities.some(a => NEEDS_EX.includes(a))) {
+    el.appendChild(card(`
+      <span class="label">Exercises</span>
+      <div id="ex-list"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <input type="text" class="inp" id="ex-inp" placeholder="Exercise name..." style="flex:1">
+        <button onclick="addEx()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--blue-dim);color:var(--blue-light);font-size:14px;cursor:pointer;font-family:inherit">Add</button>
+      </div>
+    `));
+    document.getElementById('ex-inp').onkeydown = e => { if(e.key==='Enter') addEx(); };
+    renderExList();
+  }
+
+  // Discomfort
+  const dc = form.discomfort;
+  el.appendChild(card(`
+    <span class="label" style="margin-bottom:6px">Discomfort today</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span class="mono" id="dis-num" style="font-size:28px;font-weight:600;color:${disColor(dc)}">${dc}</span>
+      <span id="dis-lbl" style="font-size:13px;color:var(--text2)">${disLabel(dc)}</span>
+    </div>
+    <input type="range" class="slider" id="dis-slider" min="0" max="10" value="${dc}"
+      style="background:linear-gradient(to right,${disColor(dc)} ${dc*10}%,var(--border) ${dc*10}%)">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+      <span>0 - None</span><span>10 - Severe</span>
+    </div>
+  `));
+  document.getElementById('dis-slider').oninput = function() {
+    const v = Number(this.value); form.discomfort = v;
+    document.getElementById('dis-num').textContent = v;
+    document.getElementById('dis-num').style.color = disColor(v);
+    document.getElementById('dis-lbl').textContent = disLabel(v);
+    this.style.background = `linear-gradient(to right,${disColor(v)} ${v*10}%,var(--border) ${v*10}%)`;
+  };
+
+  // Trend
+  const trendBtns = TRENDS.map(t => {
+    const on = form.trend === t.val;
+    return `<button class="trend-btn" onclick="setTrend('${t.val}',this)"
+      style="border-color:${on?t.color:'var(--border)'};background:${on?t.color+'22':'transparent'};color:${on?t.color:'var(--text3)'}"
+      data-val="${t.val}">${t.label}</button>`;
+  }).join('');
+  el.appendChild(card(`
+    <span class="label" style="margin-bottom:4px">Compared to yesterday</span>
+    <p class="hint">How does today feel overall?</p>
+    <div class="trend-row">${trendBtns}</div>
+  `));
+
+  // Garmin
+  el.appendChild(card(`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span class="label" style="margin-bottom:0">Garmin</span>
+      <span style="font-size:10px;color:var(--blue);background:var(--blue-dim);border-radius:6px;padding:2px 7px">optional</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${[['sleepScore','Sleep Score','/100'],['hrv','HRV','ms'],['restingHR','Resting HR','bpm'],['calories','Calories','kcal']].map(([k,l,u]) => `
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:5px">${l} <span style="color:#4a9">${u}</span></div>
+          <input type="number" class="inp-sm" style="width:100%" value="${form[k]||''}" onchange="form['${k}']=this.value">
+        </div>`).join('')}
+    </div>
+  `));
+
+  // Notes
+  el.appendChild(card(`
+    <span class="label">Notes</span>
+    <textarea class="inp" rows="3" id="inp-notes" placeholder="How the ride felt, any triggers...">${form.notes||''}</textarea>
+  `));
+  document.getElementById('inp-notes').oninput = e => form.notes = e.target.value;
+
+  // Save button
+  const saveDiv = document.createElement('div');
+  saveDiv.style.marginBottom = '8px';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn-primary';
+  saveBtn.id = 'save-btn';
+  saveBtn.textContent = editingId ? 'Update Entry' : 'Save Entry';
+  saveBtn.onclick = saveEntry;
+  saveDiv.appendChild(saveBtn);
+  el.appendChild(saveDiv);
+}
+
+function card(html) {
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.innerHTML = html;
+  return d;
+}
+
+function toggleAct(act, btn) {
+  const idx = form.activities.indexOf(act);
+  if (idx >= 0) {
+    form.activities.splice(idx, 1);
+    delete form.durations[act];
+    if (NEEDS_EX.includes(act)) form.exercises = [];
+    btn.classList.remove('on');
+  } else {
+    form.activities.push(act);
+    btn.classList.add('on');
+  }
+  renderLog();
+}
+
+function setTrend(val) {
+  form.trend = form.trend === val ? null : val;
+  document.querySelectorAll('.trend-btn').forEach(b => {
+    const t = TRENDS.find(t => t.val === b.dataset.val);
+    const on = form.trend === b.dataset.val;
+    b.style.borderColor = on ? t.color : 'var(--border)';
+    b.style.background = on ? t.color+'22' : 'transparent';
+    b.style.color = on ? t.color : 'var(--text3)';
+  });
+}
+
+// Exercises
+function renderExList() {
+  const list = document.getElementById('ex-list');
+  if (!list) return;
+  list.innerHTML = '';
+  form.exercises.forEach((ex, ei) => {
+    const d = document.createElement('div');
+    d.className = 'card-inner';
+    const sets = ex.sets.map((s,si) => `
+      <div style="display:flex;align-items:center;gap:4px">
+        <span style="font-size:10px;color:var(--text3)">S${si+1}</span>
+        <input type="number" class="inp-sm" style="width:50px" min="0" placeholder="reps"
+          value="${s.reps||''}" onchange="form.exercises[${ei}].sets[${si}].reps=this.value">
+        ${ex.sets.length>1?`<button class="btn-icon" style="font-size:13px" onclick="removeSet(${ei},${si})">x</button>`:''}
+      </div>`).join('');
+    d.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:500">${ex.name}</span>
+        <button class="btn-icon" onclick="removeEx(${ei})">x</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        ${sets}
+        <button onclick="addSet(${ei})" style="padding:3px 10px;border-radius:8px;border:1.5px dashed var(--border);background:none;color:var(--text3);font-size:12px;cursor:pointer">+ set</button>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+function addEx() {
+  const inp = document.getElementById('ex-inp');
+  const name = inp.value.trim();
+  if (!name) return;
+  form.exercises.push({ name, sets: [{reps:''}] });
+  inp.value = '';
+  renderExList();
+}
+function removeEx(ei) { form.exercises.splice(ei,1); renderExList(); }
+function addSet(ei) { form.exercises[ei].sets.push({reps:''}); renderExList(); }
+function removeSet(ei,si) { form.exercises[ei].sets.splice(si,1); renderExList(); }
+
+// Save
+async function saveEntry() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const entry = { ...form, exercises: JSON.parse(JSON.stringify(form.exercises)), id: editingId || Date.now() };
+  if (editingId) {
+    entries = entries.map(e => e.id === editingId ? entry : e);
+    editingId = null;
+  } else {
+    entries = entries.filter(e => e.date !== form.date);
+    entries.push(entry);
+    entries.sort((a,b) => a.date.localeCompare(b.date));
+  }
+
+  lsSave();
+  if (cfg.token && cfg.repo) await ghPush();
+
+  form = emptyForm();
+  renderLog();
+  toast('Entry saved!');
+}
+
+// Edit / delete
+function editEntry(id) {
+  const e = entries.find(e => e.id === id);
+  if (!e) return;
+  form = { ...emptyForm(), ...JSON.parse(JSON.stringify(e)) };
+  editingId = id;
+  switchView('log', document.getElementById('nb-log'));
+  renderLog();
+  window.scrollTo(0,0);
+}
+
+async function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  entries = entries.filter(e => e.id !== id);
+  lsSave();
+  if (cfg.token && cfg.repo) await ghPush();
+  renderHistory();
+  toast('Deleted');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const el = document.getElementById('view-dashboard');
+  if (entries.length < 2) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">&#128202;</div>Log at least 2 entries to see your dashboard</div>`;
+    return;
+  }
+  const recent = entries.slice(-30);
+  const avgDis = (entries.reduce((s,e)=>s+e.discomfort,0)/entries.length).toFixed(1);
+  const improving = Math.round(entries.filter(e=>e.trend==='better'||e.trend==='much_better').length/entries.length*100);
+  let streak=0,best=0;
+  entries.forEach(e=>{if(e.discomfort<=2){streak++;best=Math.max(best,streak);}else streak=0;});
+
+  // Discomfort chart
+  const W = recent.length*14;
+  const pts = recent.map((e,i)=>`${i*14+7},${75-e.discomfort*7}`).join(' ');
+  const dots = recent.map((e,i)=>{
+    const tc={much_worse:'#f87171',worse:'#fb923c',same:'#facc15',better:'#a3e635',much_better:'#4ade80'}[e.trend];
+    return `<circle cx="${i*14+7}" cy="${75-e.discomfort*7}" r="3" fill="${disColor(e.discomfort)}"/>
+      ${tc?`<circle cx="${i*14+7}" cy="${75-e.discomfort*7}" r="6" fill="none" stroke="${tc}" stroke-width="1.5" opacity="0.8"/>`:''}`;
+  }).join('');
+
+  // Exercise progress
+  const exNames = [...new Set(entries.flatMap(e=>(e.exercises||[]).map(x=>x.name)))];
+  let exHTML = '';
+  if (exNames.length) {
+    const tabs = exNames.map((n,i)=>`<button class="pill${i===0?' on':''}" onclick="showExProgress('${n}',this)">${n}</button>`).join('');
+    exHTML = `<div class="card">
+      <span class="label">Strength Progress</span>
+      <div class="row" style="margin-bottom:14px" id="ex-tabs">${tabs}</div>
+      <div id="ex-progress">${buildExBars(exNames[0])}</div>
+    </div>`;
+  }
+
+  // Garmin
+  const hasG = recent.some(e=>e.sleepScore||e.hrv);
+  let garminHTML = '';
+  if (hasG) {
+    const lastG = [...recent].reverse().find(e=>e.hrv||e.restingHR);
+    const sleepBars = recent.filter(e=>e.sleepScore).map(e=>`
+      <div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:2px">
+          <span>${fmtDate(e.date)}</span><span class="mono">${e.sleepScore}/100</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${e.sleepScore}%;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+      </div>`).join('');
+    const maxCal = Math.max(...recent.map(e=>Number(e.calories||0)),1);
+    const calBars = recent.filter(e=>e.calories).map(e=>`
+      <div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:2px">
+          <span>${fmtDate(e.date)}</span><span class="mono">${Number(e.calories).toLocaleString()} kcal</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Number(e.calories)/maxCal*100}%;background:linear-gradient(90deg,#c2410c,#fb923c)"></div></div>
+      </div>`).join('');
+    garminHTML = `<div class="card">
+      <span class="label">Garmin Metrics</span>
+      ${sleepBars?`<div style="margin-bottom:16px"><div style="font-size:11px;color:#a78bfa;margin-bottom:8px">Sleep Score</div>${sleepBars}</div>`:''}
+      ${lastG&&(lastG.hrv||lastG.restingHR)?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        ${lastG.hrv?`<div style="background:var(--surface2);border-radius:10px;padding:10px 14px"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Latest HRV</div><div class="mono" style="font-size:22px;font-weight:600;color:var(--green)">${lastG.hrv}</div><div style="font-size:10px;color:var(--text3)">ms</div></div>`:''}
+        ${lastG.restingHR?`<div style="background:var(--surface2);border-radius:10px;padding:10px 14px"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">Latest RHR</div><div class="mono" style="font-size:22px;font-weight:600;color:var(--red)">${lastG.restingHR}</div><div style="font-size:10px;color:var(--text3)">bpm</div></div>`:''}
+      </div>`:''}
+      ${calBars?`<div><div style="font-size:11px;color:var(--orange);margin-bottom:8px">Calories Burned</div>${calBars}</div>`:''}
+    </div>`;
+  }
+
+  // Activity load
+  const maxDur = Math.max(...recent.map(e=>Object.values(e.durations||{}).reduce((s,v)=>s+Number(v||0),0)),1);
+  const loadBars = recent.map(e=>{
+    const t=Object.values(e.durations||{}).reduce((s,v)=>s+Number(v||0),0);
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:3px">
+        <span>${fmtDate(e.date)}</span><span class="mono">${t>0?t+'min':'Rest'}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${t/maxDur*100}%;background:linear-gradient(90deg,#1d4ed8,#3b82f6)"></div></div>
+    </div>`;
+  }).join('');
+
+  // Totals
+  const totals={};
+  entries.forEach(e=>(e.activities||[]).forEach(a=>{totals[a]=(totals[a]||0)+Number((e.durations||{})[a]||0);}));
+  const totalRows=Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([a,m])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:14px;color:var(--blue-light)">${a}</span>
+      <span class="mono" style="font-size:13px;color:var(--text2)">${m>0?m+' min':'--'}</span>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="tiles" style="margin-top:8px">
+      <div class="tile"><div class="tile-val">${avgDis}</div><div class="tile-lbl">Avg Discomfort</div><div class="tile-sub">today score</div></div>
+      <div class="tile"><div class="tile-val">${improving}%</div><div class="tile-lbl">Improving</div><div class="tile-sub">of logged days</div></div>
+      <div class="tile"><div class="tile-val">${best}</div><div class="tile-lbl">Best Streak</div><div class="tile-sub">days at 2/10 or less</div></div>
+      <div class="tile"><div class="tile-val">${entries.length}</div><div class="tile-lbl">Total Days</div><div class="tile-sub">logged</div></div>
+    </div>
+    <div class="card">
+      <span class="label">Discomfort Trend</span>
+      <svg viewBox="0 0 ${W} 80" style="width:100%;overflow:visible">
+        ${[0,25,50,75].map(y=>`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#1e2130" stroke-width="1"/>`).join('')}
+        <polyline points="${pts}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${dots}
+      </svg>
+      <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text2)">
+        <span><span style="color:var(--blue)">&#9679;</span> Discomfort</span>
+        <span><span style="color:var(--green)">&#9675;</span> Better &nbsp;<span style="color:var(--red)">&#9675;</span> Worse</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--text3)">
+        <span>${recent.length>0?fmtDate(recent[0].date):''}</span>
+        <span>${recent.length>0?fmtDate(recent[recent.length-1].date):''}</span>
+      </div>
+    </div>
+    ${exHTML}
+    ${garminHTML}
+    <div class="card"><span class="label">Activity Load</span>${loadBars}</div>
+    <div class="card"><span class="label">Activity Totals</span>${totalRows}</div>
+  `;
+}
+
+function buildExBars(name) {
+  const pts = entries.filter(e=>(e.exercises||[]).some(x=>x.name===name)).map(e=>{
+    const x=e.exercises.find(x=>x.name===name);
+    const reps=x.sets.reduce((s,st)=>s+Number(st.reps||0),0);
+    return {date:e.date, reps, sets:x.sets.length};
+  });
+  if (pts.length<2) return '<div style="font-size:13px;color:var(--text3);text-align:center;padding:12px">Log at least 2 sessions to see progress</div>';
+  const maxR=Math.max(...pts.map(p=>p.reps),1);
+  return pts.map(p=>`
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px">
+        <span>${fmtDate(p.date)}</span><span class="mono">${p.reps} reps - ${p.sets} sets</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${p.reps/maxR*100}%;background:linear-gradient(90deg,#065f46,#34d399)"></div></div>
+    </div>`).join('');
+}
+
+function showExProgress(name, btn) {
+  document.querySelectorAll('#ex-tabs .pill').forEach(b=>b.classList.toggle('on',b===btn));
+  document.getElementById('ex-progress').innerHTML = buildExBars(name);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory() {
+  const el = document.getElementById('view-history');
+  if (!entries.length) {
+    el.innerHTML = `<div class="empty" style="margin-top:8px"><div class="empty-icon">&#128203;</div>No entries yet. Start logging!</div>`;
+    return;
+  }
+  const trendMap = {much_worse:['Much worse','#f87171'],worse:['Worse','#fb923c'],same:['Same','#facc15'],better:['Better','#a3e635'],much_better:['Much better','#4ade80']};
+  el.innerHTML = `<div style="padding-top:8px">${[...entries].reverse().map(e => {
+    const totalMin = Object.values(e.durations||{}).reduce((s,v)=>s+Number(v||0),0);
+    const t = e.trend && trendMap[e.trend];
+    const exRows = (e.exercises||[]).map(x=>{
+      const reps=x.sets.reduce((s,st)=>s+Number(st.reps||0),0);
+      return `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+        <span style="color:#34d399">${x.name}</span>
+        <span class="mono">${x.sets.length} sets - ${reps} reps</span>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:15px;font-weight:600">${fmtDate(e.date)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${(e.activities||[]).join(', ')||'Rest day'}${totalMin>0?' - '+totalMin+'min':''}</div>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="btn-edit" onclick="editEntry(${e.id})">edit</button>
+          <button class="btn-icon" onclick="deleteEntry(${e.id})">&#215;</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">DISCOMFORT</div>
+          <span class="mono" style="font-size:20px;font-weight:600;color:${disColor(e.discomfort)}">${e.discomfort}</span>
+          <span style="font-size:10px;color:var(--text3)">/10</span>
+        </div>
+        ${t?`<span class="pill-tag" style="border:1.5px solid ${t[1]};color:${t[1]};background:${t[1]}18">${t[0]}</span>`:''}
+        ${e.sleepScore?`<div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">SLEEP</div><span class="mono" style="font-size:20px;font-weight:600;color:#a78bfa">${e.sleepScore}</span></div>`:''}
+        ${e.hrv?`<div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">HRV</div><span class="mono" style="font-size:20px;font-weight:600;color:var(--green)">${e.hrv}</span><span style="font-size:10px;color:var(--text3)">ms</span></div>`:''}
+      </div>
+      ${exRows?`<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">${exRows}</div>`:''}
+      ${e.notes?`<div style="font-size:13px;color:var(--text2);border-top:1px solid var(--border);padding-top:10px;margin-top:10px;line-height:1.5">${e.notes}</div>`:''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  const el = document.getElementById('view-settings');
+  el.innerHTML = `
+    <div style="padding-top:8px">
+      <div class="card">
+        <span class="label">GitHub Sync</span>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+          Your data is saved to a JSON file in your GitHub repo. Create a free account at github.com, make a repo, then generate a Personal Access Token with <strong>repo</strong> scope.
+        </p>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">GitHub Repo (username/reponame)</div>
+          <input type="text" class="inp" id="cfg-repo" placeholder="e.g. johndoe/psoas-data" value="${cfg.repo}">
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Personal Access Token</div>
+          <input type="password" class="inp" id="cfg-token" placeholder="ghp_xxxxxxxxxxxx" value="${cfg.token}">
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Data file path (default: data.json)</div>
+          <input type="text" class="inp" id="cfg-path" value="${cfg.path}">
+        </div>
+        <button class="btn-primary" onclick="saveCfg()" style="margin-bottom:10px">Save & Test Connection</button>
+      </div>
+      <div class="card">
+        <span class="label">Setup Guide</span>
+        <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px">
+          <li>Go to <strong style="color:var(--text)">github.com</strong> and create a free account</li>
+          <li>Create a new <strong style="color:var(--text)">public or private repo</strong></li>
+          <li>Go to Settings &gt; Developer Settings &gt; Personal Access Tokens &gt; Tokens (classic)</li>
+          <li>Generate a token with <strong style="color:var(--text)">repo</strong> scope</li>
+          <li>Paste repo name and token above, tap Save</li>
+          <li>Upload this HTML file to the repo as <strong style="color:var(--text)">index.html</strong></li>
+          <li>Enable GitHub Pages in repo Settings</li>
+          <li>Open your Pages URL in Chrome &gt; Add to Home Screen</li>
+        </ol>
+      </div>
+      <div class="card">
+        <span class="label">Import from Claude artifact</span>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">Paste the JSON you copied from the old app to import your existing entries.</p>
+        <textarea class="inp" id="import-json" rows="4" placeholder='[{"id":...}]' style="margin-bottom:10px;font-size:12px;font-family:monospace"></textarea>
+        <button class="btn-primary" onclick="importJSON()">Import Data</button>
+      </div>
+      <div class="card">
+        <span class="label">Data</span>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">${entries.length} entries stored locally</div>
+        <button class="btn-ghost" onclick="syncNow()" style="width:100%;margin-bottom:8px">Pull from GitHub</button>
+        <button class="btn-ghost" onclick="if(confirm('Clear all local data?')){entries=[];lsSave();renderAll();toast('Cleared');}" style="width:100%;color:var(--red);border-color:var(--red)">Clear local data</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('cfg-repo').oninput = e => cfg.repo = e.target.value;
+  document.getElementById('cfg-token').oninput = e => cfg.token = e.target.value;
+  document.getElementById('cfg-path').oninput = e => cfg.path = e.target.value;
+}
+
+async function importJSON() {
+  try {
+    const raw = document.getElementById('import-json').value.trim();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('Not an array');
+    entries = parsed.sort((a,b) => a.date.localeCompare(b.date));
+    lsSave();
+    if (cfg.token && cfg.repo) await ghPush();
+    renderAll();
+    toast('Imported ' + entries.length + ' entries!');
+    document.getElementById('import-json').value = '';
+  } catch(e) {
+    toast('Invalid JSON - check the pasted data', true);
+  }
+}
+
+async function saveCfg() {
+  cfg.repo = document.getElementById('cfg-repo').value.trim();
+  cfg.token = document.getElementById('cfg-token').value.trim();
+  cfg.path = document.getElementById('cfg-path').value.trim() || 'data.json';
+  lsSave();
+  toast('Config saved, testing...');
+  const ok = await ghPull();
+  if (ok) { renderAll(); toast('Connected! Data loaded.'); }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function renderAll() {
+  renderLog();
+  // Dashboard and history rendered on demand
+}
+
+lsLoad();
+renderAll();
+
+// Auto-pull on load if configured
+if (cfg.token && cfg.repo) {
+  ghPull().then(() => renderAll());
+} else {
+  setSyncState('', 'Setup');
+}
+</script>
+</body>
+</html>
